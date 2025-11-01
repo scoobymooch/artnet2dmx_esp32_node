@@ -19,6 +19,10 @@ dmx_personality_t personalities[] = {};
 int personality_count = 0;
 byte data[DMX_PACKET_SIZE];
 unsigned long lastUpdate = millis();
+unsigned long lastLedBlink = 0;
+bool ledOn = false;
+const unsigned long LED_BLINK_DURATION = 100; // ms
+const unsigned long LED_MIN_INTERVAL = 200; // ms between flashes
 
 // === Art-Net style DMX frame handler (can be called by self-test or Art-Net) ===
 // Signature chosen to match common Art-Net libraries (universe, length, sequence, data)
@@ -40,6 +44,13 @@ void onDmxFrame(uint16_t universe, uint16_t numberOfChannels, uint8_t sequence, 
   dmx_send_num(dmxPort, 1 + len);
   dmx_wait_sent(dmxPort, DMX_TIMEOUT_TICK);
 
+  unsigned long now = millis();
+  if (now - lastLedBlink > LED_MIN_INTERVAL) {
+    digitalWrite(LED_PIN, HIGH);
+    ledOn = true;
+    lastLedBlink = now;
+  }
+
   // Optional concise log
   // Serial.printf("[ArtNetCB] Uni %u Len %u Seq %u | CH1-8:", universe, len, sequence);
   // for (int i = 0; i < 8 && i < len; i++) Serial.printf(" %3u", data[1 + i]);
@@ -59,6 +70,13 @@ void onDmxFrame(const uint8_t *frameData, uint16_t size, const ArtDmxMetadata &m
   dmx_write(dmxPort, data, 1 + len);
   dmx_send_num(dmxPort, 1 + len);
   dmx_wait_sent(dmxPort, DMX_TIMEOUT_TICK);
+
+  unsigned long now = millis();
+  if (now - lastLedBlink > LED_MIN_INTERVAL) {
+    digitalWrite(LED_PIN, HIGH);
+    ledOn = true;
+    lastLedBlink = now;
+  }
 
   // Serial.printf("[ArtNetCB] Uni %u Len %u | CH1-8:", meta.universe, len);
   // for (int i = 0; i < 8 && i < len; i++) Serial.printf(" %3u", data[1 + i]);
@@ -103,6 +121,11 @@ void setup() {
 
 void loop() {
   artnet.parse();
+
+  if (ledOn && millis() - lastLedBlink > LED_BLINK_DURATION) {
+    digitalWrite(LED_PIN, LOW);
+    ledOn = false;
+  }
   
   // unsigned long now = millis();
   // static bool high = false;
