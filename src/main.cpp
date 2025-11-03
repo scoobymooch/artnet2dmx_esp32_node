@@ -1,10 +1,3 @@
-/*
-TODO: 
-  - Handle WiFi disconnects/new IP address
-  - Add support for restart button
-  - Add support for reset button to clear WiFi config
-*/
-
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
